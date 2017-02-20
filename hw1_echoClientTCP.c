@@ -1,12 +1,23 @@
-//
-//  echoClientTCP.c
-//  ECross_Hw1
-//
-//  Created by ebony cross on 2/19/17.
-//  Copyright © 2017 ebony cross. All rights reserved.
-//
+/*
+Name: Ebony Cross-Williams
+Course: CS250
+Instructor: Jason M Pittman
+Due Date: 02/20/2017
+Institute: Capitol Technology University
+Description: create
+Filenam:echoClientTCP.c
+Directory: ECross_Hw1
 
-#include "echoClientTCP.h"
+Created by ebony cross on 2/19/17.
+Copyright © 2017 ebony cross. All rights reserved.
+
+
+Client echo code based on visual lectures, citation accredited below:
+TheSecurityTube. (May 09,2012). TCP Echo Client Using Sockets. [Video File].
+Retrieved from https://youtu.be/FRm9nk9ooC8?list=PLLfyYMQQoe3vIm2LVHVxh5AYU_Z2cYGLw
+*/
+
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>
@@ -26,7 +37,7 @@ int main(int argc, char ** argv){
     int sock; //connects to the server
     char finput[BUFFER]; //user input in buffer
     char fouput[BUFFER]; //output from server
-    int len;
+    int len, sent;
     int port = atoi(argv[2]);
     
     /*create socket for connection*/
@@ -47,17 +58,34 @@ int main(int argc, char ** argv){
         exit(-1);
     }
     
+    printf("The client is now connected to the server\n");
+    
     //connection was successful
-    while(1)
+   while(1)
+    //while(fgets(finput, BUFFER, stdin) != NULL)
     {
-        fgets(finput, BUFFER, stdin);
-        send(sock, finput, strlen(finput), 0);
         
-        len = recv(sock, fouput, BUFFER, 0);
+        /* write message and send to server*/
+        printf("Enter a message for the server: ");
+        
+        fgets(finput, BUFFER, stdin); //gives message to server from user input
+        sent = send(sock, finput, strlen(finput), 0); //send user input to server
+        if (sent < 0 )
+        {
+            perror("error writing to echo server");
+        }
+        
+        /*read message from server and print out on client side*/
+        len = recv(sock, fouput, BUFFER, 0); //read server's reply
         fouput[len] = '\0'; //last byle + null character sent by echo server
-        printf("%s\n", fouput);
+  
+        printf("%s","The response from the server is: ");
+        fputs(fouput, stdout); //print response from echo server
+
     
     }//end while loop
+
+    printf("Terminating connection to server");
     
     close(sock); //close connection
 }
