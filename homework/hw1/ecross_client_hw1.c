@@ -40,6 +40,12 @@ int main(int argc, char ** argv){
     int len, sent;
     int port = atoi(argv[2]);
     
+    /* Make sure we have the right number of command line args */
+    if (argc!=3) {
+        printf("Required format: %s <ip address> <port number>\n",argv[0]);
+        exit(0);
+    }
+    
     /*create socket for connection*/
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) == ERROR)
     {
