@@ -5,8 +5,8 @@ Instructor: Jason M Pittman
 Due Date: 02/20/2017
 Institute: Capitol Technology University
 Description: create
-Filenam:echoClientTCP.c
-Directory: ECross_Hw1
+Filename:ecross_clien_hw1.c
+Directory: homework/hw1
 
 Created by ebony cross on 2/19/17.
 Copyright © 2017 ebony cross. All rights reserved.
