@@ -77,6 +77,11 @@ int main(int argc, char ** argv){
         
         /*read message from server and print out on client side*/
         len = recv(sock, fouput, BUFFER, 0); //read server's reply
+        if (len < 0)
+        {
+            perror("error reading from echo server");
+        }
+        
         fouput[len] = '\0'; //last byle + null character sent by echo server
   
         printf("%s","The response from the server is: ");
