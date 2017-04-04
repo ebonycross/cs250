@@ -145,7 +145,7 @@ int main (int argc, char ** argv)
         
     }//end of while loop
     
-    
+    close(sockfd); //terminate socket and exit
     exit(0);
     
 
