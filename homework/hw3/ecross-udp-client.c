@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <sys/errno.h>
-#define MAXLINE 1024
+#define MAXLINE 512
 #define SERV_PORT 9930
 
 
