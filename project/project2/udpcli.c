@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <sys/errno.h>
+#include <netdb.h>
 #define MAXLINE 1024
 #define SERV_PORT 9930
 
@@ -76,13 +77,16 @@ void err_quit(const char *fmt, ...)
 /******************************************************************/
 
 
+//prototypes
+int hostname_to_ip(char *, char*);
+
 int main (int argc, char ** argv)
 {
 
     int sockfd;
     struct sockaddr_in servaddr;
     int readFr;
-    socklen_t sockLen, len;
+    socklen_t sockLen;
     char sendline[MAXLINE], recvline[MAXLINE + 1];
     int sent;
     struct sockaddr *preply_addr;
@@ -90,12 +94,21 @@ int main (int argc, char ** argv)
     static char *bc_addr = "127.255.255.255";
     int n;
     int len_bc;
+    char * hostname;
+    char ip_address[100];
     
     if(argc != 3)
         err_quit("ussage: udpcli <IPaddress><Port#>");
     
+    hostname = argv[1]; //get ip address or hostname
+    
+    hostname_to_ip(hostname, ip_address); //convert hostname ->ip address
+    
+    printf("hostname %s resolved to ip adress %s\n", hostname, ip_address);
+    
+
     //broadcast address
-    bc_addr = argv[1];
+   // bc_addr = argv[1];
 
     
     int port = atoi(argv[2]);
@@ -107,7 +120,7 @@ int main (int argc, char ** argv)
     servaddr.sin_port = htons(port);
    //servaddr.sin_addr.s_addr = inet_addr(INADDR_ANY);
     
-    inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
+    inet_pton(AF_INET, ip_address, &servaddr.sin_addr);
     
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sockfd < 0)
@@ -128,7 +141,13 @@ int main (int argc, char ** argv)
     ///modify echo client: set version fo broadcast socket option
     //it will print all the replies recieve with 5s
     n = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)); //allow multiiple listeners on broadcast address
+    
     if(n < 0)
+        perror("setsockopt");
+    
+    int t = setsockopt(sockfd, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)); //allow outgoing packets to be timestamped
+    
+    if(t < 0)
         perror("setsockopt");
     
     signal(SIGALRM, recvfrom_alarm);
@@ -153,7 +172,7 @@ int main (int argc, char ** argv)
         fgets(sendline, MAXLINE, stdin); //read a line from std input
         
         
-        sent = sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) &servaddr,sockLen); //send line to server using sendto()
+        sent = sendto(sockfd, sendline, MAXLINE, 0, (struct sockaddr *) &servaddr,sockLen); //send line to server using sendto()
         
         printf("sent message:  %s\n", sendline);
         
@@ -164,7 +183,7 @@ int main (int argc, char ** argv)
         alarm(5);
         for(;;){
             len = sockLen;
-        readFr =  recvfrom(sockfd, recvline, MAXLINE, 0, (struct sockaddr *) &preply_addr, &len); //read back the server's echo
+        readFr =  recvfrom(sockfd, recvline, MAXLINE, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)); //read back the server's echo
         
         if (readFr < 0)
         {
@@ -182,7 +201,8 @@ int main (int argc, char ** argv)
             
             //inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port),sock_ntop_host(preply_addr, len),
             
-            printf("message from %s: %s",sock_ntop(preply_addr, len), recvline);
+            
+            printf("message from %s: %s",sock_ntop((struct sockaddr *)&servaddr, sockLen), recvline);
         }
         
         
@@ -222,5 +242,42 @@ char *sock_ntop(const struct sockaddr *sa, socklen_t salen)
             return(str);
         }
     }
+}
+
+
+/** Hostname-to-ip address Function
+ -retrieve info about domain numae and convert to its ip address
+ **/
+int hostname_to_ip(char * hostname , char* ip)
+{
+    struct hostent *he;
+    struct in_addr **addr_list; //pointer to an array of pointers
+    int i;
+    
+    if ( (he = gethostbyname( hostname ) ) == NULL)
+    {
+        // get the host info
+        herror("gethostbyname error");
+        return 1;
+    }
+    
+    printf("official hostname: %s\n", he ->h_name);
+    /*
+     //print out list of aliases
+     for( addr_list = he -> h_aliases; *addr_list != NULL; addr_list++){
+     printf("\t alias: %s\n", *addr_list);
+     }
+     */
+    
+    addr_list = (struct in_addr **) he -> h_addr_list;
+    
+    for(i = 0; addr_list[i] != NULL; i++)
+    {
+        //Return the first one;
+        strcpy(ip , inet_ntoa(*addr_list[i]) );
+        return 0;
+    }
+    
+    return 1;
 }
 

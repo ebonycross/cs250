@@ -8,6 +8,8 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/errno.h>
+#include<netdb.h> //hostent
 #define BUFLEN 512
 //#define PORT 9930
 
@@ -26,15 +28,6 @@ void err(char *str)
     exit(1);
 }
 
-void err_quit(const char *fmt, ...)
-{
-    va_list ap;
-    
-    va_start(ap, fmt);
-    err_doit(0, LOG_INFO, fmt, ap);
-    va_end(ap);
-    exit(EXIT_FAILURE);
-}//end of err_quit()
 
 
 /*
@@ -69,13 +62,18 @@ int main(int argc, char ** argv)
     static char *bc_addr = "127.255.255.255"; //default server adddress
     int portno;
     
-    if(argc > 2){
+    printf("%d", argc);
+    if(argc == 3){
         bc_addr = argv[1];
     }
-    if(argc > 3){
+    if(argc == 4){
         sv_addr = argv[3];
-    } else{
-        err_quit("ussage: udpserver <broadcast IPaddress><Port#><server IPAddress>");
+    }
+    if(argc < 2){
+        printf("number of args is %d", argc);
+
+        perror("ussage: udpserver <broadcast IPaddress><Port#><server IPAddress>");
+        exit(1);
     }
     
     portno = atoi(argv[2]);
@@ -101,7 +99,7 @@ int main(int argc, char ** argv)
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); //IPv4 address for the bind
     
     //allow broadcasts
-    z = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &so_broadcast, sizeof so_broadcast);
+    z = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &so_broadcast, sizeof so_broadcast);
     if(z < 0)
         perror("setsockopt");
     
@@ -118,6 +116,7 @@ int main(int argc, char ** argv)
     while(1)
     {
         printf("SERVER: waiting for data from client\n");
+        while(1){
         n = recvfrom(sockfd, recvline, BUFLEN, 0, (struct sockaddr*)&cli_addr, &len);
          if (n==-1)
             perror("recvfrom()");
@@ -126,6 +125,7 @@ int main(int argc, char ** argv)
         
         sendto(sockfd,recvline, n, 0, (struct sockaddr*)&cli_addr, len);
         sleep(4);
+    }
        // printf("message sent %s:\n", sendline);
     }
     
