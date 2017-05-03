@@ -1,0 +1,8 @@
+Ebony Cross-Williams
+
+Course: CS250
+
+Title: Service details
+
+1. Target Operation system: MAC OS X operating system
+2. You my add the server program to the ‘daemon/service’ subsystem given we first assign the service a named port number in the /etc/services file (i.e. my chat  10000/udp). Afterwards, we add the executable in a specified location and send the SIGHUP signal to inetd, in order to tell it to reread its configuration file. For instance, one could put, my chat stream ump no wait ebony /home/ebony/udpser udpser.  If desired, you may verify  that a listening socket has been created on that port number using the command netstat.  

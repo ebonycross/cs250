@@ -1,3 +1,17 @@
+/*
+ Name: Ebony Cross-Williams
+ Course: CS250
+ Instructor: Jason M Pittman
+ Due Date: 05/02/2017
+ Institute: Capitol Technology University
+ Description: Project, create udp echo client with broadcasting
+ Filename:ecross_udpser.c
+ Directory: project2/ecross_udpser.c
+ 
+ Created by ebony cross on 4/23/17.
+ Copyright © 2017 ebony cross. All rights reserved.
+ */
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -9,9 +23,16 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/errno.h>
+#include <syslog.h>
+#include <errno.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <signal.h>
 #include<netdb.h> //hostent
 #define BUFLEN 512
-//#define PORT 9930
+#define MAXFD 64
 
 
 #ifndef TRUE
@@ -19,7 +40,7 @@
 #define FALSE 0
 #endif
 
-//extern int mkaddr(void *addr, int *addrlen, char *str_addr, char *protocol);
+int daemon_proc;
 
 
 void err(char *str)
@@ -44,7 +65,7 @@ static void bail(const char *on_what)
 }
 
 //prototypes
-
+int daemon_init(const char *pname, int facility);
 
 int main(int argc, char ** argv)
 {
@@ -77,13 +98,13 @@ int main(int argc, char ** argv)
     }
     
     portno = atoi(argv[2]);
+    
+    daemon_init(argv[0], 0); //run server as daemon
   
     //form the server address
     len_srvr = sizeof serv_addr;
-   // z = mkaddr(&serv_addr, &l, sv_addr, "udp");
-    
     len_srvr = sizeof cli_addr;
-   // z = mkaddr(&cli_addr, &l, bc_addr, "udp");
+
     
     //1.create a udp socket by specifying secnd arg is dgram
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
@@ -131,4 +152,46 @@ int main(int argc, char ** argv)
     
     close(sockfd);
     return 0;
+}
+
+int daemon_init(const char *pname, int facility)
+{
+    int i;
+    pid_t pid;
+    if((pid = fork()) < 0)
+    {
+        return (-1);
+    } else if (pid)
+        _exit(0); //parent terminates
+    
+    //child 1 continues
+    if(setsid() <0)
+       return (-1);
+    
+    signal(SIGHUP,SIG_IGN);
+    
+    if((pid = fork()) <0)
+        return(-1);
+    else if(pid)
+        _exit(0);
+    
+    //child 2 continues...
+    
+   daemon_proc = 1; //for err_XXX() fns
+    
+    chdir("/"); //chnage working directory
+    
+    //close off file descriptors
+    for(i = 0; i < MAXFD; i++){
+        close(i);
+    }
+    
+    //redirect the stdin, stdout, and stderr to /dev/null
+    open("/dev/null", O_RDONLY);
+    open("/dev/null", O_RDWR);
+    open("/dev/null", O_RDWR);
+
+    openlog(pname, LOG_PID, facility);
+    
+    return (0);
 }

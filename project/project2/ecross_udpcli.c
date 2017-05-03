@@ -2,13 +2,13 @@
  Name: Ebony Cross-Williams
  Course: CS250
  Instructor: Jason M Pittman
- Due Date: 04/03/2017
+ Due Date: 05/02/2017
  Institute: Capitol Technology University
- Description: Homework #3, create udp echo client
- Filename:ecross-udp-client.c
- Directory: homework/hw1
+ Description: Project, create udp echo client with broadcasting
+ Filename:ecross_udpcli.c
+ Directory: project2/ecross_udpcli.c
  
- Created by ebony cross on 4/03/17.
+ Created by ebony cross on 4/23/17.
  Copyright © 2017 ebony cross. All rights reserved.
  */
 #include <arpa/inet.h>
@@ -24,7 +24,7 @@
 #include <sys/errno.h>
 #include <netdb.h>
 #define MAXLINE 1024
-#define SERV_PORT 9930
+
 
 static void recvfrom_alarm(int);
 char *sock_ntop(const struct sockaddr *, socklen_t);
@@ -182,8 +182,8 @@ int main (int argc, char ** argv)
         }
         alarm(5);
         for(;;){
-            len = sockLen;
-        readFr =  recvfrom(sockfd, recvline, MAXLINE, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)); //read back the server's echo
+            
+        readFr =  recvfrom(sockfd, recvline, MAXLINE, 0, (struct sockaddr *) &servaddr, &sockLen); //read back the server's echo
         
         if (readFr < 0)
         {
@@ -242,6 +242,7 @@ char *sock_ntop(const struct sockaddr *sa, socklen_t salen)
             return(str);
         }
     }
+    return(str);
 }
 
 
